@@ -44,6 +44,7 @@ static const Rule rules[] = {
 	{ "foot",     NULL,       0,       0,      0.75,    -1 },
 	{ "foot",    "fzf",       0, 	   1,      1,       -1, 310, 200, 1300, 0.4},
 	{ "foot",    "menu",      0, 	   1,      1,       -1, 710, 300, 500, 0.35},
+	{ "scratchpad", NULL,     0,       1,      0.9,     -1, 200, 100, 0.8f, 0.7f},
 };
 
 /* layout(s) */
@@ -137,6 +138,8 @@ static const enum libinput_config_tap_button_map button_map = LIBINPUT_CONFIG_TA
 /* commands */
 static const char *term[] = { "foot", NULL };
 static const char *browser[] = { "qutebrowser", NULL };
+static const char *scratchpad_id = "scratchpad";
+static const char *scratchpadcmd[] = { "foot", "--app-id=scratchpad", NULL };
 
 static const Key keys[] = {
 	/* Note that Shift changes certain key codes: c -> C, 2 -> at, etc. */
@@ -184,6 +187,7 @@ static const Key keys[] = {
 	{ MODKEY,                    XKB_KEY_space,      setlayout,      {0} },
 	{ MODKEY|WLR_MODIFIER_SHIFT, XKB_KEY_space,      togglefloating, {0} },
 	{ MODKEY,                    XKB_KEY_f,         togglefullscreen, {0} },
+	{ MODKEY,                    XKB_KEY_grave,     togglescratchpad, {.v = scratchpadcmd} },
 	{ MODKEY,                    XKB_KEY_0,          view,           {.ui = ~0} },
 	{ MODKEY|WLR_MODIFIER_SHIFT, XKB_KEY_parenright, tag,            {.ui = ~0} },
 

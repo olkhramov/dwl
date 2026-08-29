@@ -361,6 +361,7 @@ static void tile(Monitor *m);
 static void togglefloating(const Arg *arg);
 static void togglefullscreen(const Arg *arg);
 static void togglegaps(const Arg *arg);
+static void togglescratchpad(const Arg *arg);
 static void toggletag(const Arg *arg);
 static void toggleview(const Arg *arg);
 static void unlocksession(struct wl_listener *listener, void *data);
@@ -463,6 +464,7 @@ static struct wl_listener start_drag = {.notify = startdrag};
 static struct wl_listener new_session_lock = {.notify = locksession};
 
 static int enablegaps = 1;   /* enables gaps, used by togglegaps */
+static Client *scratchpad = NULL;
 
 #ifdef XWAYLAND
 static void activatex11(struct wl_listener *listener, void *data);
@@ -1936,6 +1938,13 @@ mapnotify(struct wl_listener *listener, void *data)
 	} else {
 		applyrules(c);
 	}
+
+	/* Identify and track the scratchpad terminal */
+	if (scratchpad_id && !strcmp(client_get_appid(c), scratchpad_id)) {
+		c->isfloating = 1;
+		scratchpad = c;
+	}
+
 	printstatus();
 
 unset_fullscreen:
@@ -2975,6 +2984,24 @@ togglegaps(const Arg *arg)
 {
 	enablegaps = !enablegaps;
 	arrange(selmon);
+}
+
+void
+togglescratchpad(const Arg *arg)
+{
+	if (!scratchpad || !client_surface(scratchpad)->mapped) {
+		spawn(arg);
+		return;
+	}
+
+	if (VISIBLEON(scratchpad, selmon)) {
+		scratchpad->tags = 0;
+		focusclient(focustop(selmon), 1);
+		arrange(selmon);
+	} else {
+		setmon(scratchpad, selmon, selmon->tagset[selmon->seltags]);
+		focusclient(scratchpad, 1);
+	}
 }
 
 void
