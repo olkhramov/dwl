@@ -284,6 +284,7 @@ static void cursorconstrain(struct wlr_pointer_constraint_v1 *constraint);
 static void cursorframe(struct wl_listener *listener, void *data);
 static void cursorwarptohint(void);
 static void defaultgaps(const Arg *arg);
+static void updateborders(Monitor *m);
 static void destroydecoration(struct wl_listener *listener, void *data);
 static void destroydragicon(struct wl_listener *listener, void *data);
 static void destroyidleinhibitor(struct wl_listener *listener, void *data);
@@ -589,6 +590,8 @@ arrange(Monitor *m)
 								? layers[LyrFloat]
 								: c->scene->node.parent);
 	}
+
+	updateborders(m);
 
 	if (m->lt[m->sellt]->arrange)
 		m->lt[m->sellt]->arrange(m);
@@ -2917,6 +2920,26 @@ tagmon(const Arg *arg)
 	Client *sel = focustop(selmon);
 	if (sel)
 		setmon(sel, dirtomon(arg->i), 0);
+}
+
+void
+updateborders(Monitor *m)
+{
+	Client *c;
+	int n = 0;
+
+	if (!smartborders)
+		return;
+
+	wl_list_for_each(c, &clients, link) {
+		if (VISIBLEON(c, m) && !c->isfloating && !c->isfullscreen)
+			n++;
+	}
+
+	wl_list_for_each(c, &clients, link) {
+		if (VISIBLEON(c, m) && !c->isfloating && !c->isfullscreen)
+			c->bw = (n == 1) ? 0 : borderpx;
+	}
 }
 
 void
