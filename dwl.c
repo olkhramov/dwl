@@ -3203,6 +3203,13 @@ urgent(struct wl_listener *listener, void *data)
 	if (!c || c == focustop(selmon))
 		return;
 
+	if (focusonactivate && c->mon && client_surface(c)->mapped
+			&& (c->tags & c->mon->tagset[c->mon->seltags])) {
+		selmon = c->mon;
+		focusclient(c, 1);
+		return;
+	}
+
 	c->isurgent = 1;
 	printstatus();
 

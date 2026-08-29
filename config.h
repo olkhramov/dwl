@@ -29,6 +29,7 @@ static const float fullscreen_bg[]         = {0.0f, 0.0f, 0.0f, 1.0f}; /* You ca
 static const int respect_monitor_reserved_area = 0;  /* 1 to monitor center while respecting the monitor's reserved area, 0 to monitor center */
 static const float default_opacity_unfocus = 0.9f;
 static const float default_opacity_focus   = 1.0f;
+static const int focusonactivate           = 1;  /* 1 means focus the client on activate requests */
 
 /* tagging - TAGCOUNT must be no greater than 31 */
 #define TAGCOUNT (9)
