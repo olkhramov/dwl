@@ -16,15 +16,16 @@ static const int bypass_surface_visibility = 0;  /* 1 means idle inhibitors will
 static const int smartgaps                 = 0;  /* 1 means no outer gap when there is only one window */
 static const int monoclegaps               = 0;  /* 1 means outer gaps in monocle layout */
 static const int smartborders              = 1;  /* 1 means no borders when there is only one visible window */
-static const unsigned int borderpx         = 0;  /* border pixel of windows */
-static const unsigned int gappih           = 7; /* horiz inner gap between windows */
-static const unsigned int gappiv           = 7; /* vert inner gap between windows */
-static const unsigned int gappoh           = 25; /* horiz outer gap between windows and screen edge */
-static const unsigned int gappov           = 35; /* vert outer gap between windows and screen edge */
-static const float rootcolor[]             = COLOR(0x222222ff);
-static const float bordercolor[]           = COLOR(0x444444ff);
-static const float focuscolor[]            = COLOR(0x005577ff);
-static const float urgentcolor[]           = COLOR(0xff0000ff);
+static const unsigned int borderpx         = 2;  /* border pixel of windows */
+static const unsigned int gappih           = 8;  /* horiz inner gap between windows */
+static const unsigned int gappiv           = 8;  /* vert inner gap between windows */
+static const unsigned int gappoh           = 16; /* horiz outer gap between windows and screen edge */
+static const unsigned int gappov           = 16; /* vert outer gap between windows and screen edge */
+/* Nord-inspired palette */
+static const float rootcolor[]             = COLOR(0x2e3440ff);
+static const float bordercolor[]           = COLOR(0x4c566aff);
+static const float focuscolor[]            = COLOR(0x88c0d0ff);
+static const float urgentcolor[]           = COLOR(0xbf616aff);
 /* This conforms to the xdg-protocol. Set the alpha to zero to restore the old behavior */
 static const float fullscreen_bg[]         = {0.0f, 0.0f, 0.0f, 1.0f}; /* You can also use glsl colors */
 static const int respect_monitor_reserved_area = 0;  /* 1 to monitor center while respecting the monitor's reserved area, 0 to monitor center */
@@ -144,6 +145,8 @@ static const char *term[] = { "foot", NULL };
 static const char *browser[] = { "qutebrowser", NULL };
 static const char *scratchpad_id = "scratchpad";
 static const char *scratchpadcmd[] = { "foot", "--app-id=scratchpad", NULL };
+static const char *launcher[] = { "wofi", "--show", "drun", NULL };
+static const char *runner[] = { "wofi", "--show", "run", NULL };
 
 static const Key keys[] = {
 	/* Note that Shift changes certain key codes: c -> C, 2 -> at, etc. */
@@ -153,6 +156,8 @@ static const Key keys[] = {
 	/* core programs */
 	{ MODKEY, XKB_KEY_w, spawn, {.v = browser} },
 	{ MODKEY, XKB_KEY_Return, spawn, {.v = term} },
+	{ MODKEY, XKB_KEY_p, spawn, {.v = launcher} },
+	{ MODKEY|WLR_MODIFIER_SHIFT, XKB_KEY_P, spawn, {.v = runner} },
 
 
 	/* other programs */
@@ -240,6 +245,13 @@ static const Key keys[] = {
 	TAGKEYS(          XKB_KEY_9, XKB_KEY_parenleft,                  8),
 
 	{ MODKEY|WLR_MODIFIER_SHIFT, XKB_KEY_Q,          quit,           {0} },
+
+	/* media/function keys */
+	{ 0, XKB_KEY_XF86AudioMute,          spawn, SHCMD("pamixer -t") },
+	{ 0, XKB_KEY_XF86AudioRaiseVolume,   spawn, SHCMD("pamixer -i 5") },
+	{ 0, XKB_KEY_XF86AudioLowerVolume,   spawn, SHCMD("pamixer -d 5") },
+	{ 0, XKB_KEY_XF86MonBrightnessUp,    spawn, SHCMD("brightnessctl set +5%") },
+	{ 0, XKB_KEY_XF86MonBrightnessDown,  spawn, SHCMD("brightnessctl set 5%-") },
 
 	/* Ctrl-Alt-Backspace and Ctrl-Alt-Fx used to be handled by X server */
 	{ WLR_MODIFIER_CTRL|WLR_MODIFIER_ALT,XKB_KEY_Terminate_Server, quit, {0} },
