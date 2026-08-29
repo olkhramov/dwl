@@ -2,6 +2,7 @@
  * See LICENSE file for copyright and license details.
  */
 #include <getopt.h>
+#include <limits.h>
 #include <libinput.h>
 #include <linux/input-event-codes.h>
 #include <math.h>
@@ -2428,6 +2429,20 @@ run(char *startup_cmd)
 		dup2(piperw[1], STDOUT_FILENO);
 		close(piperw[1]);
 		close(piperw[0]);
+	}
+
+	/* Run the autostart script once at startup, if it exists and is executable */
+	{
+		const char *home = getenv("HOME");
+		char autostart[PATH_MAX];
+		if (home && snprintf(autostart, sizeof(autostart), "%s/.local/share/dwl/autostart.sh", home) < (int)sizeof(autostart)
+				&& access(autostart, X_OK) == 0) {
+			if (fork() == 0) {
+				setsid();
+				execl("/bin/sh", "/bin/sh", "-c", autostart, NULL);
+				_exit(EXIT_FAILURE);
+			}
+		}
 	}
 
 	/* Mark stdout as non-blocking to avoid the startup script
