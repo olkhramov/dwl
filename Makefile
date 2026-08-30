@@ -65,14 +65,14 @@ install: dwl
 	mkdir -p $(DESTDIR)$(MANDIR)/man1
 	cp -f dwl.1 $(DESTDIR)$(MANDIR)/man1
 	chmod 644 $(DESTDIR)$(MANDIR)/man1/dwl.1
-	mkdir -p $(DESTDIR)$(DATADIR)/wayland-sessions
+	mkdir -p $(DESTDIR)$(SESSIONDIR)
 	home="$$(getent passwd "$${SUDO_USER:-$$USER}" | cut -d: -f6)"; \
 	printf '%s\n' '[Desktop Entry]' 'Name=dwl' 'Comment=dwm for Wayland' "Exec=$$home/.local/bin/dwl-launch" 'Type=Application' \
-		> $(DESTDIR)$(DATADIR)/wayland-sessions/dwl.desktop
-	chmod 644 $(DESTDIR)$(DATADIR)/wayland-sessions/dwl.desktop
+		> $(DESTDIR)$(SESSIONDIR)/dwl.desktop
+	chmod 644 $(DESTDIR)$(SESSIONDIR)/dwl.desktop
 uninstall:
 	rm -f $(DESTDIR)$(PREFIX)/bin/dwl $(DESTDIR)$(MANDIR)/man1/dwl.1 \
-		$(DESTDIR)$(DATADIR)/wayland-sessions/dwl.desktop
+		$(DESTDIR)$(SESSIONDIR)/dwl.desktop
 
 .SUFFIXES: .c .o
 .c.o:

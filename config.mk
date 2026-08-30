@@ -7,6 +7,8 @@ PKG_CONFIG = pkg-config
 PREFIX = /usr/local
 MANDIR = $(PREFIX)/share/man
 DATADIR = $(PREFIX)/share
+# display managers only scan /usr/share/wayland-sessions, not $(PREFIX)/share
+SESSIONDIR = /usr/share/wayland-sessions
 
 WLR_INCS = `$(PKG_CONFIG) --cflags wlroots-0.19`
 WLR_LIBS = `$(PKG_CONFIG) --libs wlroots-0.19`
