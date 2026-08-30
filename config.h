@@ -62,9 +62,9 @@ static const Rule rules[] = {
 /* layout(s) */
 static const Layout layouts[] = {
 	/* symbol     arrange function */
-	{ "",      tile },
-	{ "",      NULL },    /* no layout function means floating behavior */
-	{ "",      monocle },
+	{ "[]=" , tile },
+	{ "><>", NULL },    /* no layout function means floating behavior */
+	{ "[M]" , monocle },
 };
 
 /* monitors */
@@ -157,6 +157,9 @@ static const char *scratchpad_id = "scratchpad";
 static const char *scratchpadcmd[] = { "ghostty", "--app-id=scratchpad", NULL };
 static const char *launcher[] = { "wmenu-drun", NULL };
 static const char *runner[] = { "wmenu-run", NULL };
+static const char *filecmd[] = { "ghostty", "-e", "lfub", NULL };
+static const char *renewcmd[] = { "dwl-renew", NULL };
+static const char *restartbarcmd[] = { "dwl-restart-bar", NULL };
 
 static const Key keys[] = {
 	/* Note that Shift changes certain key codes: c -> C, 2 -> at, etc. */
@@ -164,8 +167,9 @@ static const Key keys[] = {
 
 	/* core programs */
 	{ MODKEY,                    XKB_KEY_w,          spawn,          {.v = browser} },
-	{ MODKEY,                    XKB_KEY_e,          spawn,          {.v = (const char*[]){ "emacs", NULL } } },
-	{ MODKEY|WLR_MODIFIER_SHIFT, XKB_KEY_E,          spawn,          {.v = (const char*[]){ "emacs", NULL } } },
+	{ MODKEY,                    XKB_KEY_e,          spawn,          {.v = (const char*[]){ "ghostty", "-e", "doom-emacs", "-nw", NULL } } },
+	{ MODKEY|WLR_MODIFIER_SHIFT, XKB_KEY_E,          spawn,          {.v = (const char*[]){ "ghostty", "-e", "doom-emacs", "-nw", NULL } } },
+	{ MODKEY,                    XKB_KEY_r,          spawn,          {.v = filecmd} },
 	{ MODKEY,                    XKB_KEY_Return,     spawn,          {.v = term} },
 	{ MODKEY,                    XKB_KEY_d,          spawn,          {.v = launcher} },
 	{ MODKEY|WLR_MODIFIER_SHIFT, XKB_KEY_D,          spawn,          {.v = runner} },
@@ -236,6 +240,8 @@ static const Key keys[] = {
 	TAGKEYS(          XKB_KEY_9, XKB_KEY_parenleft,                  8),
 
 	{ MODKEY|WLR_MODIFIER_SHIFT, XKB_KEY_Q,          quit,           {0} },
+	{ MODKEY|WLR_MODIFIER_CTRL|WLR_MODIFIER_SHIFT, XKB_KEY_Q, spawn, {.v = renewcmd} },
+	{ MODKEY|WLR_MODIFIER_SHIFT, XKB_KEY_b,          spawn,          {.v = restartbarcmd} },
 
 	/* media/function keys */
 	{ 0, XKB_KEY_XF86AudioMute,          spawn, SHCMD("wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle") },
