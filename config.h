@@ -170,7 +170,7 @@ static const Key keys[] = {
 	{ MODKEY,                    XKB_KEY_Return,     spawn,          {.v = term} },
 	{ MODKEY,                    XKB_KEY_d,          spawn,          {.v = launcher} },
 	{ MODKEY|WLR_MODIFIER_SHIFT, XKB_KEY_D,          spawn,          {.v = runner} },
-	{ MODKEY,                    XKB_KEY_BackSpace,  spawn,          {.v = (const char*[]){ "sysact", NULL } } },
+	{ MODKEY,                    XKB_KEY_BackSpace,  spawn,          {.v = (const char*[]){ "wmenu-sysact", NULL } } },
 
 	/* media controls */
 	{ MODKEY,                    XKB_KEY_Insert,     spawn,          SHCMD("mpc prev") },
