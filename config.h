@@ -77,6 +77,7 @@ static const MonitorRule monrules[] = {
 	/* name       mfact  nmaster scale layout       rotate/reflect                x    y */
 	/* example of a HiDPI laptop monitor: */
 	{ "eDP-1_example",    0.5f,  1,      2,    &layouts[0], WL_OUTPUT_TRANSFORM_NORMAL,   -1,  -1 },
+	{ NULL,                 0.5f,  1,      1,    &layouts[0], WL_OUTPUT_TRANSFORM_NORMAL,   -1,  -1 },
 };
 
 /* keyboard */
@@ -155,8 +156,8 @@ static const char *term[] = { "ghostty", NULL };
 static const char *browser[] = { "firefox", NULL };
 static const char *scratchpad_id = "scratchpad";
 static const char *scratchpadcmd[] = { "ghostty", "--app-id=scratchpad", NULL };
-static const char *launcher[] = { "wofi", "--show", "drun", NULL };
-static const char *runner[] = { "wofi", "--show", "run", NULL };
+static const char *launcher[] = { "wmenu-drun", NULL };
+static const char *runner[] = { "wmenu-run", NULL };
 
 static const Key keys[] = {
 	/* Note that Shift changes certain key codes: c -> C, 2 -> at, etc. */
