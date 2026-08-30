@@ -89,9 +89,8 @@ static const struct xkb_rule_names xkb_rules = {
 	.options = "ctrl:nocaps",
 };
 
-/* increased for faster typing */
-static const int repeat_rate = 75;
-static const int repeat_delay = 150;
+static const int repeat_rate = 25;
+static const int repeat_delay = 600;
 
 /* Trackpad */
 static const int tap_to_click = 1;
