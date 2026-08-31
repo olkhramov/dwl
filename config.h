@@ -29,7 +29,7 @@ static const unsigned int gappiv           = 8;  /* vert inner gap between windo
 static const unsigned int gappoh           = 16; /* horiz outer gap between windows and screen edge */
 static const unsigned int gappov           = 16; /* vert outer gap between windows and screen edge */
 
-/* Catppuccin Mocha palette (matches polybar) */
+/* Catppuccin Mocha palette (matches owlbar) */
 static const float rootcolor[]             = COLOR(0x1e1e2eff);
 static const float bordercolor[]           = COLOR(0x313244ff);
 static const float focuscolor[]            = COLOR(0x89b4faff);
