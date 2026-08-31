@@ -187,6 +187,8 @@ static const Key keys[] = {
 	{ MODKEY,                    XKB_KEY_BackSpace,  spawn,          {.v = (const char*[]){ "wmenu-sysact", NULL } } },
 	{ MODKEY,                    XKB_KEY_F1,         spawn,          SHCMD("groff -mom /home/entekka/.local/share/shortcuts-dwl.mom -T pdf | zathura -") },
 	{ MODKEY|WLR_MODIFIER_SHIFT, XKB_KEY_F1,         spawn,          {.v = (const char*[]){ "lima-readme", NULL } } },
+	{ MODKEY,                    XKB_KEY_F9,         spawn,          {.v = (const char*[]){ "wmenu-mount", NULL } } },
+	{ MODKEY,                    XKB_KEY_F10,        spawn,          {.v = (const char*[]){ "wmenu-unmount", NULL } } },
 
 	/* media controls */
 	{ MODKEY,                    XKB_KEY_Insert,     spawn,          SHCMD("mpc prev") },
