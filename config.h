@@ -167,8 +167,8 @@ static const Key keys[] = {
 
 	/* core programs */
 	{ MODKEY,                    XKB_KEY_w,          spawn,          {.v = browser} },
-	{ MODKEY,                    XKB_KEY_e,          spawn,          {.v = (const char*[]){ "ghostty", "-e", "doom-emacs", "-nw", NULL } } },
-	{ MODKEY|WLR_MODIFIER_SHIFT, XKB_KEY_E,          spawn,          {.v = (const char*[]){ "ghostty", "-e", "doom-emacs", "-nw", NULL } } },
+	{ MODKEY,                    XKB_KEY_e,          spawn,          {.v = (const char*[]){ "ghostty", "-e", "doom-org", "-nw", NULL } } },
+	{ MODKEY|WLR_MODIFIER_SHIFT, XKB_KEY_E,          spawn,          {.v = (const char*[]){ "ghostty", "-e", "doom-dev", "-nw", NULL } } },
 	/* Super+e taken; use Super+Ctrl+e for the emacsclient frame (kept in sync with dwm) */
 	{ MODKEY|WLR_MODIFIER_CTRL,  XKB_KEY_e,          spawn,          SHCMD("emacsclient -c -a emacs") },
 	{ MODKEY|WLR_MODIFIER_CTRL|WLR_MODIFIER_SHIFT, XKB_KEY_E, spawn, SHCMD("emacsclient -c -a emacs -e '(org-capture)'") },
