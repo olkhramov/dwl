@@ -156,7 +156,7 @@ static const char *browser[] = { "firefox", NULL };
 static const char *scratchpad_id = "scratchpad";
 static const char *scratchpadcmd[] = { "ghostty", "--app-id=scratchpad", NULL };
 static const char *launcher[] = { "wmenu-drun", NULL };
-static const char *runner[] = { "wmenu-run", NULL };
+static const char *runner[] = { "wmenu-run-styled", NULL };
 static const char *filecmd[] = { "ghostty", "-e", "lfub", NULL };
 static const char *renewcmd[] = { "dwl-renew", NULL };
 static const char *restartbarcmd[] = { "dwl-restart-bar", NULL };
