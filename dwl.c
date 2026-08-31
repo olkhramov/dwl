@@ -1,6 +1,8 @@
 /*
  * See LICENSE file for copyright and license details.
  */
+#include <errno.h>
+#include <fcntl.h>
 #include <getopt.h>
 #include <limits.h>
 #include <libinput.h>
@@ -9,6 +11,8 @@
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <sys/stat.h>
 #include <sys/wait.h>
 #include <time.h>
 #include <unistd.h>
@@ -315,6 +319,7 @@ static void incogaps(const Arg *arg);
 static void incohgaps(const Arg *arg);
 static void incovgaps(const Arg *arg);
 static void inputdevice(struct wl_listener *listener, void *data);
+static int ipcread(int fd, uint32_t mask, void *data);
 static int keybinding(uint32_t mods, xkb_keysym_t sym);
 static void keypress(struct wl_listener *listener, void *data);
 static void keypressmod(struct wl_listener *listener, void *data);
@@ -357,6 +362,7 @@ static void setopacityfocus(const Arg *arg);
 static void setpsel(struct wl_listener *listener, void *data);
 static void setsel(struct wl_listener *listener, void *data);
 static void setup(void);
+static void setupipc(void);
 static void spawn(const Arg *arg);
 static void startdrag(struct wl_listener *listener, void *data);
 static void tag(const Arg *arg);
@@ -386,6 +392,7 @@ static void rotate_clients(const Arg *arg);
 /* variables */
 static pid_t child_pid = -1;
 static int locked;
+static int ipcfd = -1; /* see setupipc()/ipcread() */
 static void *exclusive_focus;
 static struct wl_display *dpy;
 static struct wl_event_loop *event_loop;
@@ -2436,6 +2443,61 @@ resize(Client *c, struct wlr_box geo, int interact)
 	wlr_scene_subsurface_tree_set_clip(&c->scene_surface->node, &clip);
 }
 
+/* Minimal control surface for external tools (currently just owlbar-wl's
+ * tag-click-to-view) that dwl itself has no other way to reach: a FIFO at
+ * ~/.local/state/dwl/ipc.fifo, one command per line. Only "view <mask>"
+ * is understood so far - mask is the same tag bitmask view()'s keybindings
+ * already pass via arg->ui (1u << tag-index), so a click on tag i writes
+ * "view <1u<<i>\n". Nothing fancier than a FIFO (no dwl-ipc-unstable-v2,
+ * no socket protocol) because this only needs to carry one kind of
+ * fire-and-forget request, one way. */
+static int
+ipcread(int fd, uint32_t mask, void *data)
+{
+	static char buf[256];
+	static size_t len;
+	ssize_t n;
+	char *nl;
+
+	(void)mask; (void)data;
+	while ((n = read(fd, buf + len, sizeof buf - len - 1)) > 0) {
+		unsigned int tagmask;
+
+		len += (size_t)n;
+		buf[len] = '\0';
+		while ((nl = memchr(buf, '\n', len))) {
+			*nl = '\0';
+			if (sscanf(buf, "view %u", &tagmask) == 1)
+				view(&(Arg){.ui = tagmask});
+			len -= (size_t)(nl + 1 - buf);
+			memmove(buf, nl + 1, len);
+			buf[len] = '\0';
+		}
+		if (len == sizeof buf - 1)
+			len = 0; /* overlong line with no newline: drop it */
+	}
+	return 0;
+}
+
+static void
+setupipc(void)
+{
+	char path[PATH_MAX];
+	const char *home = getenv("HOME");
+
+	if (!home || snprintf(path, sizeof path, "%s/.local/state/dwl/ipc.fifo", home) >= (int)sizeof path)
+		return;
+	if (mkfifo(path, 0600) < 0 && errno != EEXIST)
+		return;
+	/* O_RDWR, not O_RDONLY: keeps our own write end open so read() blocks
+	 * on "no data yet" (EAGAIN, since it's also O_NONBLOCK) instead of
+	 * returning EOF the moment a client's open-write-close round-trip
+	 * finishes and we'd otherwise be left with zero writers. */
+	if ((ipcfd = open(path, O_RDWR | O_NONBLOCK)) < 0)
+		return;
+	wl_event_loop_add_fd(event_loop, ipcfd, WL_EVENT_READABLE, ipcread, NULL);
+}
+
 void
 run(char *startup_cmd)
 {
@@ -2469,6 +2531,9 @@ run(char *startup_cmd)
 		close(piperw[1]);
 		close(piperw[0]);
 	}
+
+	/* Before autostart, so owlbar-wl finds the FIFO already there */
+	setupipc();
 
 	/* Run the autostart script once at startup, if it exists and is executable */
 	{
