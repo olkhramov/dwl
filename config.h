@@ -185,6 +185,8 @@ static const Key keys[] = {
 	{ MODKEY,                    XKB_KEY_d,          spawn,          {.v = launcher} },
 	{ MODKEY|WLR_MODIFIER_SHIFT, XKB_KEY_D,          spawn,          {.v = runner} },
 	{ MODKEY,                    XKB_KEY_BackSpace,  spawn,          {.v = (const char*[]){ "wmenu-sysact", NULL } } },
+	{ MODKEY,                    XKB_KEY_n,          spawn,          {.v = (const char*[]){ "noticenter", NULL } } },
+	{ MODKEY|WLR_MODIFIER_SHIFT, XKB_KEY_n,          spawn,          {.v = (const char*[]){ "notif-dnd", NULL } } },
 	{ MODKEY,                    XKB_KEY_F1,         spawn,          SHCMD("groff -mom /home/entekka/.local/share/shortcuts-dwl.mom -T pdf | zathura -") },
 	{ MODKEY|WLR_MODIFIER_SHIFT, XKB_KEY_F1,         spawn,          {.v = (const char*[]){ "lima-readme", NULL } } },
 	{ MODKEY,                    XKB_KEY_F3,         spawn,          {.v = (const char*[]){ "wmenu-display", NULL } } },
