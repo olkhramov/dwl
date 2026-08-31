@@ -206,8 +206,8 @@ static const Key keys[] = {
 	{ MODKEY|WLR_MODIFIER_SHIFT, XKB_KEY_space,      togglefloating, {0} },
 	{ MODKEY,                    XKB_KEY_f,          togglefullscreen, {0} },
 	{ MODKEY,                    XKB_KEY_grave,      togglescratchpad, {.v = scratchpadcmd} },
-	{ MODKEY|WLR_MODIFIER_SHIFT, XKB_KEY_grave,      spawn,          SHCMD("wmenu-unicode") },
-	{ MODKEY|WLR_MODIFIER_CTRL,  XKB_KEY_grave,      spawn,          SHCMD("wmenu-unicode type") },
+	{ MODKEY|WLR_MODIFIER_SHIFT, XKB_KEY_grave,      spawn,          SHCMD("emoji") },
+	{ MODKEY|WLR_MODIFIER_CTRL,  XKB_KEY_grave,      spawn,          SHCMD("emoji type") },
 	{ MODKEY,                    XKB_KEY_0,          view,           {.ui = ~0} },
 	{ MODKEY|WLR_MODIFIER_SHIFT, XKB_KEY_parenright, tag,            {.ui = ~0} },
 
