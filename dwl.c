@@ -1,6 +1,7 @@
 /*
  * See LICENSE file for copyright and license details.
  */
+#include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <getopt.h>
@@ -320,6 +321,8 @@ static void incohgaps(const Arg *arg);
 static void incovgaps(const Arg *arg);
 static void inputdevice(struct wl_listener *listener, void *data);
 static int ipcread(int fd, uint32_t mask, void *data);
+static void readthemecolor(int idx, float dst[4]);
+static void reloadcolors(void);
 static int keybinding(uint32_t mods, xkb_keysym_t sym);
 static void keypress(struct wl_listener *listener, void *data);
 static void keypressmod(struct wl_listener *listener, void *data);
@@ -1657,6 +1660,8 @@ handlesig(int signo)
 		while (waitpid(-1, NULL, WNOHANG) > 0);
 	else if (signo == SIGINT || signo == SIGTERM)
 		quit(NULL);
+	else if (signo == SIGUSR1)
+		reloadcolors();
 }
 
 void
@@ -2498,6 +2503,86 @@ setupipc(void)
 	wl_event_loop_add_fd(event_loop, ipcfd, WL_EVENT_READABLE, ipcread, NULL);
 }
 
+/* Reads $THEME_FILE (default: ~/.config/xresources/theme, an
+ * .Xresources-format fragment of `*colorN: #rrggbb` lines - see set-theme
+ * and ~/.config/xresources/themes/) for colorN and parses it into dst as
+ * normalized RGBA floats (alpha forced to 1.0). Leaves dst untouched on
+ * any failure - a missing symlink (no theme picked yet) or malformed file
+ * just keeps whatever config.h compiled in. Matches a bare digit boundary
+ * after the number so color1 doesn't false-match inside color10..15. */
+static void
+readthemecolor(int idx, float dst[4])
+{
+	char path[PATH_MAX];
+	char line[128];
+	char pat[8];
+	const char *override = getenv("THEME_FILE");
+	const char *home = getenv("HOME");
+	const char *xdgcfg = getenv("XDG_CONFIG_HOME");
+	FILE *fp;
+	unsigned int r, g, b;
+	int n, patlen;
+
+	if (override && *override)
+		n = snprintf(path, sizeof path, "%s", override);
+	else if (xdgcfg && *xdgcfg)
+		n = snprintf(path, sizeof path, "%s/xresources/theme", xdgcfg);
+	else if (home)
+		n = snprintf(path, sizeof path, "%s/.config/xresources/theme", home);
+	else
+		return;
+	if (n < 0 || n >= (int)sizeof path)
+		return;
+
+	if (!(fp = fopen(path, "r")))
+		return;
+
+	snprintf(pat, sizeof pat, "color%d", idx);
+	patlen = (int)strlen(pat);
+	while (fgets(line, sizeof line, fp)) {
+		char *p = strstr(line, pat);
+		char *hash;
+		if (!p || isdigit((unsigned char)p[patlen]))
+			continue; /* no match, or matched color1 inside color1x */
+		if (!(hash = strchr(p, '#')))
+			continue;
+		if (sscanf(hash, "#%2x%2x%2x", &r, &g, &b) == 3) {
+			dst[0] = r / 255.0f;
+			dst[1] = g / 255.0f;
+			dst[2] = b / 255.0f;
+			dst[3] = 1.0f;
+			break;
+		}
+	}
+	fclose(fp);
+}
+
+/* SIGUSR1: retheme from ~/.config/xresources/theme without restarting - a
+ * script (set-theme, after re-pointing that symlink) can signal this
+ * alongside dwm/owlbar's own SIGUSR1-triggered Xresources reload,
+ * retheming everything running at once. */
+static void
+reloadcolors(void)
+{
+	Client *c, *sel;
+
+	readthemecolor(0, rootcolor);
+	readthemecolor(8, bordercolor);
+	readthemecolor(4, focuscolor);
+	readthemecolor(1, urgentcolor);
+
+	if (root_bg)
+		wlr_scene_rect_set_color(root_bg, rootcolor);
+
+	sel = selmon ? focustop(selmon) : NULL;
+	wl_list_for_each(c, &clients, link) {
+		if (c->isurgent)
+			client_set_border_color(c, urgentcolor);
+		else
+			client_set_border_color(c, c == sel ? focuscolor : bordercolor);
+	}
+}
+
 void
 run(char *startup_cmd)
 {
@@ -2792,7 +2877,7 @@ setsel(struct wl_listener *listener, void *data)
 void
 setup(void)
 {
-	int drm_fd, i, sig[] = {SIGCHLD, SIGINT, SIGTERM, SIGPIPE};
+	int drm_fd, i, sig[] = {SIGCHLD, SIGINT, SIGTERM, SIGPIPE, SIGUSR1};
 	struct sigaction sa = {.sa_flags = SA_RESTART, .sa_handler = handlesig};
 	sigemptyset(&sa.sa_mask);
 
@@ -2901,6 +2986,10 @@ setup(void)
 	 */
 	wl_list_init(&clients);
 	wl_list_init(&fstack);
+
+	reloadcolors(); /* now that clients/fstack are initialized: picks up
+	                  * whichever theme is symlinked at startup, not just
+	                  * on a later SIGUSR1 */
 
 	xdg_shell = wlr_xdg_shell_create(dpy, 6);
 	wl_signal_add(&xdg_shell->events.new_toplevel, &new_xdg_toplevel);

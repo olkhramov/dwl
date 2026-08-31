@@ -29,11 +29,15 @@ static const unsigned int gappiv           = 8;  /* vert inner gap between windo
 static const unsigned int gappoh           = 16; /* horiz outer gap between windows and screen edge */
 static const unsigned int gappov           = 16; /* vert outer gap between windows and screen edge */
 
-/* Catppuccin Mocha palette (matches owlbar) */
-static const float rootcolor[]             = COLOR(0x1e1e2eff);
-static const float bordercolor[]           = COLOR(0x313244ff);
-static const float focuscolor[]            = COLOR(0x89b4faff);
-static const float urgentcolor[]           = COLOR(0xf38ba8ff);
+/* Catppuccin Mocha palette (matches owlbar). Mutable (not const): SIGUSR1
+ * overwrites these in place from ~/.config/xresources/theme (see
+ * readthemecolor() in dwl.c) - color0/8/4/1, same colorN convention dwm's
+ * own Xresources-based reload uses, so `set-theme <name>` retheme both
+ * dwm and dwl (and owlbar/owlbar-wl) in step. */
+static float rootcolor[4]             = COLOR(0x1e1e2eff);
+static float bordercolor[4]           = COLOR(0x313244ff);
+static float focuscolor[4]            = COLOR(0x89b4faff);
+static float urgentcolor[4]           = COLOR(0xf38ba8ff);
 
 /* This conforms to the xdg-protocol. Set the alpha to zero to restore the old behavior */
 static const float fullscreen_bg[]         = {0.0f, 0.0f, 0.0f, 1.0f}; /* You can also use glsl colors */
