@@ -87,10 +87,25 @@ static const MonitorRule monrules[] = {
 /* keyboard */
 static const struct xkb_rule_names xkb_rules = {
 	/* can specify fields: rules, model, layout, variant, options */
-	/* example:
-	.options = "ctrl:nocaps",
-	*/
-	.options = "ctrl:nocaps",
+	/* .layout/.variant here are only the compiled-in fallback if
+	 * ~/.config/kblayouts is missing/unreadable - loadkblayouts()
+	 * (dwl.c) reads that file at startup and overrides them when
+	 * present, giving printstatus() (dwl.c) whatever layouts are
+	 * configured there to report on the bar. Switching between them is
+	 * grp:win_space_toggle (Super+Space) below - a real XKB action
+	 * compiled into the keymap, processed by the same key-event path as
+	 * every other keystroke. An earlier hand-rolled version drove the
+	 * switch imperatively from C (wlr_keyboard_notify_modifiers, bound
+	 * to Super+Shift+S) instead of through the keymap: that forced state
+	 * silently got clobbered by the very next real key event (e.g.
+	 * releasing Super), because xkb_state_update_key() - what every
+	 * physical keypress goes through - recomputes the whole state from
+	 * the currently-held keys and the keymap's own compiled actions, not
+	 * from whatever an external xkb_state_update_mask() call last poked
+	 * in. A grp: option doesn't have this problem: it changes the group
+	 * *through* xkb_state_update_key() in the first place. */
+	.layout = "us,fr",
+	.options = "ctrl:nocaps,grp:win_space_toggle",
 };
 
 static const int repeat_rate = 25;
@@ -186,7 +201,7 @@ static const Key keys[] = {
 	{ MODKEY|WLR_MODIFIER_SHIFT, XKB_KEY_D,          spawn,          {.v = runner} },
 	{ MODKEY,                    XKB_KEY_BackSpace,  spawn,          {.v = (const char*[]){ "wmenu-sysact", NULL } } },
 	{ MODKEY,                    XKB_KEY_n,          spawn,          {.v = (const char*[]){ "noticenter", NULL } } },
-	{ MODKEY|WLR_MODIFIER_SHIFT, XKB_KEY_n,          spawn,          {.v = (const char*[]){ "notif-dnd", NULL } } },
+	{ MODKEY|WLR_MODIFIER_SHIFT, XKB_KEY_N,          spawn,          {.v = (const char*[]){ "notif-dnd", NULL } } },
 	{ MODKEY,                    XKB_KEY_F1,         spawn,          SHCMD("groff -mom /home/entekka/.local/share/shortcuts-dwl.mom -T pdf | zathura -") },
 	{ MODKEY|WLR_MODIFIER_SHIFT, XKB_KEY_F1,         spawn,          {.v = (const char*[]){ "lima-readme", NULL } } },
 	{ MODKEY,                    XKB_KEY_F3,         spawn,          {.v = (const char*[]){ "wmenu-display", NULL } } },
@@ -212,9 +227,9 @@ static const Key keys[] = {
 	{ MODKEY,                    XKB_KEY_q,          killclient,     {0} },
 	{ MODKEY,                    XKB_KEY_t,          setlayout,      {.v = &layouts[0]} },
 	{ MODKEY,                    XKB_KEY_m,          setlayout,      {.v = &layouts[2]} },
-	{ MODKEY,                    XKB_KEY_space,      setlayout,      {0} },
-	{ MODKEY|WLR_MODIFIER_SHIFT, XKB_KEY_space,      togglefloating, {0} },
+	{ MODKEY,                    XKB_KEY_g,          setlayout,      {0} },
 	{ MODKEY,                    XKB_KEY_f,          togglefullscreen, {0} },
+	{ MODKEY|WLR_MODIFIER_SHIFT, XKB_KEY_F,          togglefloating, {0} },
 	{ MODKEY,                    XKB_KEY_grave,      togglescratchpad, {.v = scratchpadcmd} },
 	{ MODKEY|WLR_MODIFIER_SHIFT, XKB_KEY_grave,      spawn,          SHCMD("emoji") },
 	{ MODKEY|WLR_MODIFIER_CTRL,  XKB_KEY_grave,      spawn,          SHCMD("emoji type") },
@@ -261,7 +276,7 @@ static const Key keys[] = {
 
 	{ MODKEY|WLR_MODIFIER_SHIFT, XKB_KEY_Q,          quit,           {0} },
 	{ MODKEY|WLR_MODIFIER_CTRL|WLR_MODIFIER_SHIFT, XKB_KEY_Q, spawn, {.v = renewcmd} },
-	{ MODKEY|WLR_MODIFIER_SHIFT, XKB_KEY_b,          spawn,          {.v = restartbarcmd} },
+	{ MODKEY|WLR_MODIFIER_SHIFT, XKB_KEY_B,          spawn,          {.v = restartbarcmd} },
 
 	/* media/function keys */
 	{ 0, XKB_KEY_XF86AudioMute,          spawn, SHCMD("wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle") },

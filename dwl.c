@@ -1026,19 +1026,132 @@ createkeyboard(struct wlr_keyboard *keyboard)
 	wlr_keyboard_group_add_keyboard(kb_group->wlr_group, keyboard);
 }
 
+/* ~/.config/kblayouts is one xkb layout code per line, optionally
+ * "layout:variant" (e.g. "tr:f") - the same file dwm's autostart.sh
+ * reads to build its own setxkbmap -layout list under X11. Loaded into
+ * these as the comma-separated,
+ * positionally-matched lists xkb_rule_names.layout/.variant expect
+ * (xkbcommon pairs variant[i] with layout[i] by index). Left empty on a
+ * missing/unreadable file, so createkeyboardgroup() falls back to
+ * config.h's compiled-in xkb_rules.layout - same "config wins if
+ * present, compiled default otherwise" convention set-theme already
+ * uses for colors. */
+static char kblayout_buf[512];
+static char kbvariant_buf[512];
+
+/* Positional lookup tables mirroring kblayout_buf/kbvariant_buf, so
+ * printstatus() can report the exact raw code (e.g. "fr" or "tr:f")
+ * for whichever group index is active - the same format
+ * ~/.config/kblayouts uses and kblayout-query prints for owlbar-kblayout
+ * (see ~/.local/src/kblayout-query), so owlbar-kblayout/owlbar-wl-kblayout
+ * can share identical flag/ISO-code
+ * display logic (see country-flag) instead of parsing two different
+ * formats. Populated by splitcsv() from whichever of kblayout_buf or
+ * config.h's compiled xkb_rules.layout actually ends up in the keymap. */
+#define MAX_KBLAYOUTS 16
+static char kblayout_names[MAX_KBLAYOUTS][32];
+static char kbvariant_names[MAX_KBLAYOUTS][32];
+static int nkblayouts;
+
+static void
+loadkblayouts(void)
+{
+	FILE *f;
+	char line[64], path[512], *nl, *colon, *variant;
+	const char *home = getenv("HOME");
+
+	/* createkeyboardgroup() (and so loadkblayouts()) runs more than
+	 * once per process - once at startup, and again per virtual
+	 * keyboard client (see virtualkeyboard()) - so these static buffers
+	 * need clearing first, or a second call silently appends onto the
+	 * first and duplicates every layout. */
+	kblayout_buf[0] = '\0';
+	kbvariant_buf[0] = '\0';
+
+	if (!home)
+		return;
+	snprintf(path, sizeof(path), "%s/.config/kblayouts", home);
+	if (!(f = fopen(path, "r")))
+		return;
+
+	while (fgets(line, sizeof(line), f)) {
+		if ((nl = strchr(line, '\n')))
+			*nl = '\0';
+		if (!*line)
+			continue;
+		if ((colon = strchr(line, ':'))) {
+			*colon = '\0';
+			variant = colon + 1;
+		} else {
+			variant = "";
+		}
+		snprintf(kblayout_buf + strlen(kblayout_buf),
+			sizeof(kblayout_buf) - strlen(kblayout_buf),
+			"%s%s", *kblayout_buf ? "," : "", line);
+		snprintf(kbvariant_buf + strlen(kbvariant_buf),
+			sizeof(kbvariant_buf) - strlen(kbvariant_buf),
+			"%s%s", *kbvariant_buf ? "," : "", variant);
+	}
+	fclose(f);
+}
+
+/* Finds the next comma (or end of string) without collapsing empty
+ * fields the way strtok would - needed because kbvariant_buf routinely
+ * has empty fields between commas (e.g. ",,f" when only the third
+ * layout has a variant) that must stay positionally aligned with
+ * kblayout_buf's fields. */
+static const char *
+findcomma(const char *s)
+{
+	const char *c = strchr(s, ',');
+	return c ? c : s + strlen(s);
+}
+
+static void
+splitcsv(const char *layouts_csv, const char *variants_csv)
+{
+	const char *lp = layouts_csv, *vp = variants_csv ? variants_csv : "";
+	const char *lc, *vc;
+
+	nkblayouts = 0;
+	while (*lp && nkblayouts < MAX_KBLAYOUTS) {
+		lc = findcomma(lp);
+		vc = findcomma(vp);
+
+		snprintf(kblayout_names[nkblayouts], sizeof(kblayout_names[0]),
+			"%.*s", (int)(lc - lp), lp);
+		snprintf(kbvariant_names[nkblayouts], sizeof(kbvariant_names[0]),
+			"%.*s", (int)(vc - vp), vp);
+		nkblayouts++;
+
+		lp = *lc ? lc + 1 : lc;
+		vp = *vc ? vc + 1 : vc;
+	}
+}
+
 KeyboardGroup *
 createkeyboardgroup(void)
 {
 	KeyboardGroup *group = ecalloc(1, sizeof(*group));
 	struct xkb_context *context;
 	struct xkb_keymap *keymap;
+	struct xkb_rule_names kbrules = xkb_rules;
+
+	loadkblayouts();
+	if (*kblayout_buf) {
+		kbrules.layout = kblayout_buf;
+		kbrules.variant = kbvariant_buf;
+		splitcsv(kblayout_buf, kbvariant_buf);
+	} else {
+		splitcsv(xkb_rules.layout ? xkb_rules.layout : "us", xkb_rules.variant);
+	}
 
 	group->wlr_group = wlr_keyboard_group_create();
 	group->wlr_group->data = group;
 
 	/* Prepare an XKB keymap and assign it to the keyboard group. */
 	context = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
-	if (!(keymap = xkb_keymap_new_from_names(context, &xkb_rules,
+	if (!(keymap = xkb_keymap_new_from_names(context, &kbrules,
 				XKB_KEYMAP_COMPILE_NO_FLAGS)))
 		die("failed to compile keymap");
 
@@ -1878,11 +1991,38 @@ keypressmod(struct wl_listener *listener, void *data)
 	/* This event is raised when a modifier key, such as shift or alt, is
 	 * pressed. We simply communicate this to the client. */
 	KeyboardGroup *group = wl_container_of(listener, group, modifiers);
+	/* XKB layout group changes (grp:win_space_toggle in config.h, i.e.
+	 * Super+Space) land here too, since a group switch is itself a
+	 * modifiers event. Track the last-seen group so the bar only gets
+	 * poked on an actual layout change, not on every plain Shift/Ctrl/
+	 * Alt press - those fire this same listener far more often. */
+	static xkb_layout_index_t lastgroup = (xkb_layout_index_t)-1;
+	xkb_layout_index_t curgroup;
 
 	wlr_seat_set_keyboard(seat, &group->wlr_group->keyboard);
 	/* Send modifiers to the client. */
 	wlr_seat_keyboard_notify_modifiers(seat,
 			&group->wlr_group->keyboard.modifiers);
+
+	curgroup = xkb_state_serialize_layout(group->wlr_group->keyboard.xkb_state,
+			XKB_STATE_LAYOUT_EFFECTIVE);
+	if (curgroup != lastgroup) {
+		lastgroup = curgroup;
+		printstatus();
+		/* Fire-and-forget fork+exec, same as spawn(): system() would
+		 * block this thread (the Wayland event loop) in waitpid() until
+		 * the shell exits, stalling every client - including owlbar-wl
+		 * itself - for as long as that takes, and forking a
+		 * multi-threaded process (wlroots keeps its own DRM/render
+		 * helper threads) risks wedging on a lock inherited from a
+		 * thread that wasn't forking, same class of bug as the pango
+		 * worker-thread signal race documented in owlbar-wl.c. */
+		if (fork() == 0) {
+			setsid();
+			execlp("pkill", "pkill", "-RTMIN+14", "owlbar-wl", (char *)NULL);
+			_exit(127);
+		}
+	}
 }
 
 int
@@ -2303,6 +2443,36 @@ printstatus(void)
 	Monitor *m = NULL;
 	Client *c;
 	uint32_t occ, urg, sel;
+	/* seat->keyboard_state.keyboard, not kb_group: a virtual-keyboard
+	 * device (see virtualkeyboard()) gets its own KeyboardGroup,
+	 * deliberately not merged into kb_group, and becomes the seat's
+	 * active keyboard the moment it sends any key/modifier event - so
+	 * reading kb_group here could report a group nobody's actually
+	 * typing through. Every group's name tables come from the same
+	 * ~/.config/kblayouts read at group-creation time, so the group
+	 * index maps into kblayout_names[]/kbvariant_names[] the same way
+	 * regardless of which group is currently live. */
+	struct wlr_keyboard *kb = seat->keyboard_state.keyboard;
+	xkb_layout_index_t curlayout;
+
+	if (!kb)
+		kb = &kb_group->wlr_group->keyboard;
+	curlayout = xkb_state_serialize_layout(kb->xkb_state, XKB_STATE_LAYOUT_EFFECTIVE);
+
+	/* global, not per-monitor - owlbar-wl-kblayout keys
+	 * on the "kblayout" field, ignoring field 1 (see owlbar-wl-layout's
+	 * identical convention for the tiling-layout symbol). Reports the
+	 * raw "layout" or "layout:variant" code (from kblayout_names/
+	 * kbvariant_names, populated by splitcsv() in createkeyboardgroup())
+	 * rather than xkb_keymap_layout_get_name()'s descriptive name, so
+	 * owlbar-wl-kblayout can build a flag+ISO-code display with the
+	 * exact same format/logic owlbar-kblayout already uses under X11. */
+	if (curlayout < (xkb_layout_index_t)nkblayouts) {
+		if (*kbvariant_names[curlayout])
+			printf("kb kblayout %s:%s\n", kblayout_names[curlayout], kbvariant_names[curlayout]);
+		else
+			printf("kb kblayout %s\n", kblayout_names[curlayout]);
+	}
 
 	wl_list_for_each(m, &mons, link) {
 		occ = urg = 0;
@@ -2448,14 +2618,10 @@ resize(Client *c, struct wlr_box geo, int interact)
 	wlr_scene_subsurface_tree_set_clip(&c->scene_surface->node, &clip);
 }
 
-/* Minimal control surface for external tools (currently just owlbar-wl's
- * tag-click-to-view) that dwl itself has no other way to reach: a FIFO at
- * ~/.local/state/dwl/ipc.fifo, one command per line. Only "view <mask>"
- * is understood so far - mask is the same tag bitmask view()'s keybindings
- * already pass via arg->ui (1u << tag-index), so a click on tag i writes
- * "view <1u<<i>\n". Nothing fancier than a FIFO (no dwl-ipc-unstable-v2,
- * no socket protocol) because this only needs to carry one kind of
- * fire-and-forget request, one way. */
+/* Minimal control surface for external tools (owlbar-wl tag clicks and the
+ * keyboard-layout block) that dwl itself has no other way to reach: a FIFO
+ * at ~/.local/state/dwl/ipc.fifo, one command per line. Commands execute
+ * from this event-loop callback, never an asynchronous signal handler. */
 static int
 ipcread(int fd, uint32_t mask, void *data)
 {
