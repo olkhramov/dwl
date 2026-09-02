@@ -191,6 +191,8 @@ static const Key keys[] = {
 	/* Super+e taken; use Super+Ctrl+e for the emacsclient frame (kept in sync with dwm) */
 	{ MODKEY|WLR_MODIFIER_CTRL,  XKB_KEY_e,          spawn,          SHCMD("emacsclient -c -a emacs") },
 	{ MODKEY|WLR_MODIFIER_CTRL|WLR_MODIFIER_SHIFT, XKB_KEY_E, spawn, SHCMD("emacsclient -c -a emacs -e '(org-capture)'") },
+	{ MODKEY,                    XKB_KEY_Escape,      spawn,          {.v = (const char*[]){ "noticenter", NULL } } },
+	{ MODKEY|WLR_MODIFIER_SHIFT, XKB_KEY_Escape,      spawn,          {.v = (const char*[]){ "notif-dnd", NULL } } },
 	{ MODKEY|WLR_MODIFIER_SHIFT, XKB_KEY_X,          spawn,          SHCMD("lockscreen") },
 	{ MODKEY|WLR_MODIFIER_SHIFT, XKB_KEY_C,          spawn,          SHCMD("clipboard-menu") },
 	{ 0,                         XKB_KEY_Print,      spawn,          {.v = (const char*[]){ "screenshot", NULL } } },
@@ -200,8 +202,7 @@ static const Key keys[] = {
 	{ MODKEY,                    XKB_KEY_d,          spawn,          {.v = launcher} },
 	{ MODKEY|WLR_MODIFIER_SHIFT, XKB_KEY_D,          spawn,          {.v = runner} },
 	{ MODKEY,                    XKB_KEY_BackSpace,  spawn,          {.v = (const char*[]){ "wmenu-sysact", NULL } } },
-	{ MODKEY,                    XKB_KEY_n,          spawn,          {.v = (const char*[]){ "noticenter", NULL } } },
-	{ MODKEY|WLR_MODIFIER_SHIFT, XKB_KEY_N,          spawn,          {.v = (const char*[]){ "notif-dnd", NULL } } },
+	{ MODKEY,                    XKB_KEY_n,          spawn,          {.v = (const char*[]){ "ghostty", "-e", "newsboat", NULL } } },
 	{ MODKEY,                    XKB_KEY_F1,         spawn,          SHCMD("groff -mom /home/entekka/.local/share/shortcuts-dwl.mom -T pdf | zathura -") },
 	{ MODKEY|WLR_MODIFIER_SHIFT, XKB_KEY_F1,         spawn,          {.v = (const char*[]){ "lima-readme", NULL } } },
 	{ MODKEY,                    XKB_KEY_F3,         spawn,          {.v = (const char*[]){ "wmenu-display", NULL } } },
