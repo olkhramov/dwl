@@ -2640,6 +2640,14 @@ ipcread(int fd, uint32_t mask, void *data)
 			*nl = '\0';
 			if (sscanf(buf, "view %u", &tagmask) == 1)
 				view(&(Arg){.ui = tagmask});
+			else if (!strcmp(buf, "focus-next"))
+				focusstack(&(Arg){.i = +1});
+			else if (!strcmp(buf, "focus-prev"))
+				focusstack(&(Arg){.i = -1});
+			else if (!strcmp(buf, "toggle-floating"))
+				togglefloating(NULL);
+			else if (!strcmp(buf, "toggle-fullscreen"))
+				togglefullscreen(NULL);
 			len -= (size_t)(nl + 1 - buf);
 			memmove(buf, nl + 1, len);
 			buf[len] = '\0';
