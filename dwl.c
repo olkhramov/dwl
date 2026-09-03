@@ -2648,6 +2648,17 @@ ipcread(int fd, uint32_t mask, void *data)
 				togglefloating(NULL);
 			else if (!strcmp(buf, "toggle-fullscreen"))
 				togglefullscreen(NULL);
+			else if (!strcmp(buf, "layout-next")) {
+				size_t i;
+				for (i = 0; selmon && i < LENGTH(layouts); i++)
+					if (selmon->lt[selmon->sellt] == &layouts[i])
+						break;
+				if (selmon)
+					setlayout(&(Arg){.v = &layouts[(i + 1) % LENGTH(layouts)]});
+			} else if (!strcmp(buf, "mfact-inc"))
+				setmfact(&(Arg){.f = +0.05f});
+			else if (!strcmp(buf, "mfact-dec"))
+				setmfact(&(Arg){.f = -0.05f});
 			len -= (size_t)(nl + 1 - buf);
 			memmove(buf, nl + 1, len);
 			buf[len] = '\0';
