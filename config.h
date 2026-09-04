@@ -303,5 +303,8 @@ static const Key keys[] = {
 static const Button buttons[] = {
 	{ MODKEY, BTN_LEFT,   moveresize,     {.ui = CurMove} },
 	{ MODKEY, BTN_MIDDLE, togglefloating, {0} },
+	/* Same selection menu as Super+Shift+Space; Shift keeps resize intact. */
+	{ MODKEY|WLR_MODIFIER_SHIFT, BTN_RIGHT, spawn,
+	  {.v = (const char*[]){ "ctxmenu", "selection", NULL } } },
 	{ MODKEY, BTN_RIGHT,  moveresize,     {.ui = CurResize} },
 };
