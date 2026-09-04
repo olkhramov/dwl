@@ -227,7 +227,8 @@ static const Key keys[] = {
 
 	{ MODKEY,                    XKB_KEY_Return,     zoom,           {0} },
 	{ MODKEY,                    XKB_KEY_Tab,        view,           {0} },
-	{ MODKEY|WLR_MODIFIER_SHIFT, XKB_KEY_Tab,        spawn,          SHCMD("palette") },
+	/* Shift+Tab resolves to ISO_Left_Tab, not Tab, through xkbcommon. */
+	{ MODKEY|WLR_MODIFIER_SHIFT, XKB_KEY_ISO_Left_Tab, spawn,        SHCMD("palette") },
 	{ MODKEY,                    XKB_KEY_q,          killclient,     {0} },
 	{ MODKEY,                    XKB_KEY_t,          setlayout,      {.v = &layouts[0]} },
 	{ MODKEY,                    XKB_KEY_m,          setlayout,      {.v = &layouts[2]} },
