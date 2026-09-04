@@ -194,6 +194,7 @@ static const Key keys[] = {
 	{ MODKEY|WLR_MODIFIER_SHIFT, XKB_KEY_Escape,      spawn,          {.v = (const char*[]){ "notif-dnd", NULL } } },
 	{ MODKEY|WLR_MODIFIER_SHIFT, XKB_KEY_X,          spawn,          SHCMD("lockscreen") },
 	{ MODKEY|WLR_MODIFIER_SHIFT, XKB_KEY_C,          spawn,          SHCMD("clipboard-menu") },
+	{ MODKEY|WLR_MODIFIER_SHIFT, XKB_KEY_space,      spawn,          {.v = (const char*[]){ "ctxmenu", "selection", NULL } } },
 	{ 0,                         XKB_KEY_Print,      spawn,          {.v = (const char*[]){ "screenshot", NULL } } },
 	{ WLR_MODIFIER_SHIFT,        XKB_KEY_Print,      spawn,          {.v = (const char*[]){ "screenshot", "full", NULL } } },
 	{ MODKEY,                    XKB_KEY_r,          spawn,          {.v = filecmd} },
