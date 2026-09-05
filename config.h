@@ -186,7 +186,7 @@ static const Key keys[] = {
 
 	/* core programs */
 	{ MODKEY,                    XKB_KEY_w,          spawn,          {.v = browser} },
-	{ MODKEY,                    XKB_KEY_e,          spawn,          {.v = (const char*[]){ "emacs-open", NULL } } },
+	{ MODKEY,                    XKB_KEY_e,          spawn,          {.v = (const char*[]){ "ghostty", "-e", "emacs-open", "--tty", NULL } } },
 	{ MODKEY|WLR_MODIFIER_SHIFT, XKB_KEY_E,          spawn,          {.v = (const char*[]){ "org", NULL } } },
 	{ MODKEY|WLR_MODIFIER_CTRL,  XKB_KEY_e,          spawn,          {.v = (const char*[]){ "org", "agenda", NULL } } },
 	{ MODKEY|WLR_MODIFIER_CTRL|WLR_MODIFIER_SHIFT, XKB_KEY_E, spawn, {.v = (const char*[]){ "org", "capture", NULL } } },
